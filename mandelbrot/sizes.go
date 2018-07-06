@@ -33,7 +33,7 @@ func loadSizes() (s sizes) {
 		s = calcSizesPriority(s)
 	}()
 
-	configFile, err := os.Open("github.com/tusupov/gomandelbrot/config/sizes.json")
+	configFile, err := os.Open("config/sizes.json")
 	if err != nil {
 		s = defaulSizes
 		return

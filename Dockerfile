@@ -9,6 +9,8 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
+COPY --from=0 /go/src/github.com/tusupov/gomandelbrot/config config
 COPY --from=0 /go/src/github.com/tusupov/gomandelbrot/gomandelbrot .
 
+RUN ls -la
 CMD ["./gomandelbrot"]
