@@ -1,0 +1,20 @@
+version: '3.3'
+
+services:
+
+    gomandelbrot:
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+        environment:
+            CACHE_DIR: $CACHE_DIR
+            CACHE_LIMIT: $CACHE_LIMIT
+            WORKERS: $WORKERS
+            LISTEN: ":3020"
+        ports:
+            - "3020:3020"
+        networks:
+            - frontend
+
+networks:
+    frontend:
