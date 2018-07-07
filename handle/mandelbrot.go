@@ -36,10 +36,11 @@ func Mandelbrot(w http.ResponseWriter, r *http.Request) {
 func writeImage(w http.ResponseWriter, buf []byte) {
 
 	// Устанавливаем нужные параметры для header
-	w.WriteHeader(200)
-	w.Header().Set("Content-Type", "image/jpg")
-	w.Header().Set("Content-Disposition", "filename=\"mandelbrot.png\"")
+	w.Header().Set("Content-Disposition", "inline; filename=\"mandelbrot.png\"")
+	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Content-Length", strconv.Itoa(len(buf)))
+
+	w.WriteHeader(http.StatusOK)
 
 	// Записываем картинку
 	w.Write(buf)

@@ -35,10 +35,12 @@ type param struct {
 	minImag, maxImag 	float64
 }
 
-// move mandelbrot to x and y pixel
+// переместить mandelbrot в x и y пиксель
 func (m mandelbrot) Move(x, y float64) mandelbrot {
 
 	m.moveX += x
+
+	// Умножаем на -1, чтобы правильно определит y оси
 	m.moveY += y * -1
 
 	m.updateId()
@@ -47,7 +49,7 @@ func (m mandelbrot) Move(x, y float64) mandelbrot {
 
 }
 
-// zoom mandelbrot x times
+// увеличить x раз
 func (m mandelbrot) Zoom(x uint64) mandelbrot {
 
 	if x == 0 { return m }
