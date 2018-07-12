@@ -9,10 +9,10 @@ import (
 const (
 
 	// Значение по умолчанию для папки кэша
-	defaultDirectoryPath 		= "./cache/"	// folder
+	defaultDirectoryPath = "./cache/" // folder
 
 	// Значение по умолчанию для лимита кэша
-	defaultDirectoryLimit 		= 16 << 30		// 16G
+	defaultDirectoryLimit = 16 << 30 // 16G
 
 )
 
@@ -39,7 +39,6 @@ func getDirectoryPath() string {
 
 }
 
-
 var directoryLimit *int64
 
 // Возвращает лимит ограничение для папки кэша
@@ -65,8 +64,8 @@ func getDirectoryLimit() int64 {
 			} else {
 				// with unit
 
-				value := limitStr[:len(limitStr) - 1]
-				unit := limitStr[len(limitStr) - 1]
+				value := limitStr[:len(limitStr)-1]
+				unit := limitStr[len(limitStr)-1]
 
 				var unitValue byte = 0
 
