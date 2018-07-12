@@ -186,7 +186,7 @@ func (m mandelbrot) Draw() (buf []byte) {
 	}
 
 	// Сохраняет в кэш и возвращаем байт массив картинки
-	buf, err = cache.Save(m.width, m.height, m.id, img)
+	buf, _ = cache.Save(m.width, m.height, m.id, img)
 
 	return
 
