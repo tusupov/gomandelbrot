@@ -13,7 +13,7 @@ var _ = os.Setenv("CACHE_LIMIT", "1M")
 var testJpg []byte
 
 // empty black jpg
-func getTestJpg() (width int, heigth  int, id string, buf []byte, err error) {
+func getTestJpg() (width int, heigth int, id string, buf []byte, err error) {
 
 	width = 2048
 	heigth = 2048
@@ -36,7 +36,6 @@ func getTestJpg() (width int, heigth  int, id string, buf []byte, err error) {
 	return width, heigth, id, testJpg, nil
 
 }
-
 
 func TestCacheSaveLoad(t *testing.T) {
 
@@ -98,7 +97,7 @@ func TestCacheLimit(t *testing.T) {
 
 		cnt++
 
-		_, err = Save(width, heigth, id + strconv.Itoa(cnt), img)
+		_, err = Save(width, heigth, id+strconv.Itoa(cnt), img)
 		if err != nil {
 			t.Error(err)
 			return

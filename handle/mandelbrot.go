@@ -22,10 +22,10 @@ func Mandelbrot(w http.ResponseWriter, r *http.Request) {
 	// Создаем и получаем "Множество Мандельброта"
 	// в виде байт массива
 	buf := mandelbrot.
-				New(rec).
-				Move(x, y).
-				Zoom(zoom).
-				Draw()
+		New(rec).
+		Move(x, y).
+		Zoom(zoom).
+		Draw()
 
 	// Выводим на экран картинку
 	writeImage(w, buf)

@@ -1,10 +1,8 @@
 package cache
 
 import (
-"fmt"
-"os"
-
-
+	"fmt"
+	"os"
 )
 
 // get directory size

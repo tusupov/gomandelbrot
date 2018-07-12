@@ -8,9 +8,9 @@ import (
 )
 
 type point struct {
-	X			int		`json:"x"`
-	Y			int		`json:"y"`
-	priority	int
+	X        int `json:"x"`
+	Y        int `json:"y"`
+	priority int
 }
 
 type sizes map[string]point
@@ -54,8 +54,8 @@ func loadSizes() (s sizes) {
 func calcSizesPriority(s sizes) sizes {
 
 	type pointN struct {
-		name	string
-		x, y 	int
+		name string
+		x, y int
 	}
 
 	sizeList := make([]pointN, 0)
@@ -63,20 +63,20 @@ func calcSizesPriority(s sizes) sizes {
 	for k, v := range s {
 		sizeList = append(
 			sizeList, pointN{
-				name: 	k,
-				x:		v.X,
-				y:		v.Y,
+				name: k,
+				x:    v.X,
+				y:    v.Y,
 			},
 		)
 	}
 
-	sort.Slice(sizeList, func(i, j int) bool { return sizeList[i].x  < sizeList[j].x })
+	sort.Slice(sizeList, func(i, j int) bool { return sizeList[i].x < sizeList[j].x })
 
 	for k, v := range sizeList {
 		s[v.name] = point{
-			X: 			v.x,
-			Y: 			v.y,
-			priority: 	k + 1,
+			X:        v.x,
+			Y:        v.y,
+			priority: k + 1,
 		}
 	}
 

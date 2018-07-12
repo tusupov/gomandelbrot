@@ -9,7 +9,7 @@ import (
 )
 
 var argv struct {
-	listen 		string
+	listen string
 }
 
 func initArgv() {

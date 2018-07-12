@@ -3,36 +3,30 @@ package mandelbrot
 import (
 	"crypto/md5"
 	"encoding/hex"
-"image"
-"image/color"
-"image/draw"
-"math"
+	"image"
+	"image/color"
+	"image/draw"
+	"math"
 	"strconv"
 	"sync/atomic"
 
-
-
-
-
-
-
-"github.com/tusupov/gomandelbrot/cache"
+	"github.com/tusupov/gomandelbrot/cache"
 )
 
-var inQueueCnt = make([]int32, len(sizesList) + 1)
+var inQueueCnt = make([]int32, len(sizesList)+1)
 
 type mandelbrot struct {
-	id					string
-	moveX, moveY 		float64
-	zoom				uint64
-	width, height		int
-	priority			int
-	param				param
+	id            string
+	moveX, moveY  float64
+	zoom          uint64
+	width, height int
+	priority      int
+	param         param
 }
 
 type param struct {
-	minReal, maxReal 	float64
-	minImag, maxImag 	float64
+	minReal, maxReal float64
+	minImag, maxImag float64
 }
 
 // переместить mandelbrot в x и y пиксель
@@ -52,7 +46,9 @@ func (m mandelbrot) Move(x, y float64) mandelbrot {
 // увеличить x раз
 func (m mandelbrot) Zoom(x uint64) mandelbrot {
 
-	if x == 0 { return m }
+	if x == 0 {
+		return m
+	}
 
 	m.param = param{
 		minReal: m.param.minReal / float64(x),
@@ -98,7 +94,7 @@ func (m *mandelbrot) pushQueue() {
 
 // Убирает из очереди
 func (m mandelbrot) pullQueue() {
-	<- workers
+	<-workers
 }
 
 // Проверка есть ли более приоритетные процессы
@@ -200,8 +196,8 @@ func (m mandelbrot) Draw() (buf []byte) {
 func (m mandelbrot) complex(x, y int) complex128 {
 
 	return complex(
-		(m.param.maxReal - m.param.minReal) * (float64(x) + m.moveX) / float64(m.width) + m.param.minReal,
-		(m.param.maxImag - m.param.minImag) * (float64(y) + m.moveY) / float64(m.height) + m.param.minImag,
+		(m.param.maxReal-m.param.minReal)*(float64(x)+m.moveX)/float64(m.width)+m.param.minReal,
+		(m.param.maxImag-m.param.minImag)*(float64(y)+m.moveY)/float64(m.height)+m.param.minImag,
 	)
 
 }
@@ -212,10 +208,10 @@ func (m mandelbrot) calcIteration() int {
 
 	f := math.Sqrt(
 		0.001 +
-		2.0 * math.Min(
-			math.Abs(m.param.minReal - m.param.maxReal),
-			math.Abs(m.param.minImag - m.param.maxImag),
-		),
+			2.0*math.Min(
+				math.Abs(m.param.minReal-m.param.maxReal),
+				math.Abs(m.param.minImag-m.param.maxImag),
+			),
 	)
 
 	return int(208.0 / f)
@@ -226,8 +222,8 @@ func (m mandelbrot) calcIteration() int {
 func (m *mandelbrot) updateId() {
 
 	str := strconv.FormatInt(int64(m.zoom), 10) + "_" +
-			strconv.FormatFloat(m.moveX, 'f', -1, 64) + "_" +
-			strconv.FormatFloat(m.moveY, 'f', -1, 64)
+		strconv.FormatFloat(m.moveX, 'f', -1, 64) + "_" +
+		strconv.FormatFloat(m.moveY, 'f', -1, 64)
 
 	hasher := md5.New()
 	hasher.Write([]byte(str))
@@ -243,15 +239,15 @@ func New(rec string) mandelbrot {
 	width, height, priority := GetSize(rec)
 
 	m := mandelbrot{
-		width:		width,
-		height:		height,
-		priority:	priority,
-		zoom:		1,
-		param:		param{
-			minReal: 	-2.0,
-			maxReal: 	1.0,
-			minImag:	-1.5,
-			maxImag:	1.5,
+		width:    width,
+		height:   height,
+		priority: priority,
+		zoom:     1,
+		param: param{
+			minReal: -2.0,
+			maxReal: 1.0,
+			minImag: -1.5,
+			maxImag: 1.5,
 		},
 	}
 

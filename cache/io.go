@@ -35,7 +35,7 @@ func Save(width, height int, id string, img image.Image) (buf []byte, err error)
 
 	// Если размер увеличиться после сохранение,
 	// очищаем папку кэша
-	if diskUsage(getDirectoryPath()) + int64(len(buf)) > getDirectoryLimit() {
+	if diskUsage(getDirectoryPath())+int64(len(buf)) > getDirectoryLimit() {
 		err = Clear()
 		if err != nil {
 			return
@@ -43,7 +43,7 @@ func Save(width, height int, id string, img image.Image) (buf []byte, err error)
 	}
 
 	// Создаем нужные директории
-	err = os.MkdirAll(getDirectoryPath() + getSubPath(width, height), os.ModePerm)
+	err = os.MkdirAll(getDirectoryPath()+getSubPath(width, height), os.ModePerm)
 	if err != nil {
 		return
 	}
@@ -53,11 +53,11 @@ func Save(width, height int, id string, img image.Image) (buf []byte, err error)
 
 	// Сохраняем данные в tmp файл,
 	// потом переименуем в нужным нам файл
-	err = ioutil.WriteFile(filePath + ".tmp", buf, os.ModePerm)
+	err = ioutil.WriteFile(filePath+".tmp", buf, os.ModePerm)
 	if err != nil {
 		os.Remove(filePath + ".tmp")
 	} else {
-		err = os.Rename(filePath + ".tmp", filePath)
+		err = os.Rename(filePath+".tmp", filePath)
 	}
 
 	return
