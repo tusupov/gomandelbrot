@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/tusupov/gomandelbrot)](https://goreportcard.com/report/github.com/tusupov/gomandelbrot)
+
 Множество Мандельброта
 ===============
 
