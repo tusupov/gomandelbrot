@@ -7,7 +7,7 @@ services:
             context: .
             dockerfile: ./Dockerfile
         environment:
-            CACHE_DIR: $CACHE_DIR
+            CACHE_PATH: $CACHE_PATH
             CACHE_LIMIT: $CACHE_LIMIT
             WORKERS: $WORKERS
             LISTEN: ":3020"
@@ -15,6 +15,8 @@ services:
             - "3020:3020"
         networks:
             - frontend
+        volumes:
+            - ./tmp:/cache
 
 networks:
     frontend:
