@@ -46,6 +46,10 @@ func loadSizes() (s sizes) {
 		return
 	}
 
+	if _, ok := s["small"]; !ok {
+		s["small"] = defaulSizes["small"]
+	}
+
 	return
 
 }
@@ -76,7 +80,7 @@ func calcSizesPriority(s sizes) sizes {
 		s[v.name] = point{
 			X:        v.x,
 			Y:        v.y,
-			priority: k + 1,
+			priority: k,
 		}
 	}
 

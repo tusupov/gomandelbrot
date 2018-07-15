@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"image"
 	"image/color"
-	"image/draw"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -13,7 +12,7 @@ import (
 	"github.com/tusupov/gomandelbrot/cache"
 )
 
-var inQueueCnt = make([]int32, len(sizesList)+1)
+var inQueueSum = make([]int32, len(sizesList))
 
 type mandelbrot struct {
 	id            string
@@ -73,21 +72,21 @@ func (m *mandelbrot) pushQueue() {
 
 	// Проверка приоритета на валидност
 	// если не валидно устанавливает самый низкий приоритет
-	if m.priority > len(sizesList) || m.priority < 1 {
+	if m.priority < 0 || len(sizesList) <= m.priority  {
 		m.priority = len(sizesList)
 	}
 
 	// Добавляет в очередь
-	for i := m.priority + 1; i <= len(sizesList); i++ {
-		atomic.AddInt32(&inQueueCnt[i], 1)
+	for i := m.priority + 1; i < len(sizesList); i++ {
+		atomic.AddInt32(&inQueueSum[i], 1)
 	}
 
 	// Ждет своей очереди
 	workers <- struct{}{}
 
 	// Убирает из очереди
-	for i := m.priority + 1; i <= len(sizesList); i++ {
-		atomic.AddInt32(&inQueueCnt[i], -1)
+	for i := m.priority + 1; i < len(sizesList); i++ {
+		atomic.AddInt32(&inQueueSum[i], -1)
 	}
 
 }
@@ -101,7 +100,7 @@ func (m mandelbrot) pullQueue() {
 // которые попали в очередь
 func (m mandelbrot) hasLowerInQueue() bool {
 
-	if inQueueCnt[m.priority] > 0 {
+	if inQueueSum[m.priority] > 0 {
 		return true
 	}
 
@@ -122,15 +121,6 @@ func (m mandelbrot) Draw() (buf []byte) {
 
 	// Создает новую картинку с указанными размерами
 	img := image.NewRGBA64(image.Rect(0, 0, m.width, m.height))
-
-	// Заполняет картинку черным цветом
-	draw.Draw(
-		img,
-		img.Bounds(),
-		&image.Uniform{color.Black},
-		img.Bounds().Min,
-		draw.Over,
-	)
 
 	// Количество итерации
 	iteration := m.calcIteration()
