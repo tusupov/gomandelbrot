@@ -2,74 +2,79 @@ package mandelbrot
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"sort"
 	"strings"
 )
 
-type point struct {
-	X        int `json:"x"`
-	Y        int `json:"y"`
+var (
+	errSizeNotFound = errors.New("Size not found")
+)
+
+var (
+	sizeList   = make(map[string]Size)
+	inQueueSum = make([]int32, 0)
+)
+
+type Size struct {
+	X        int `json:"size"`
 	priority int
 }
 
-type sizes map[string]point
+func LoadSize(configPath string) (n int, err error) {
 
-// Значение размеров по умолчанию
-var defaulSizes = sizes{
-	"small": {
-		X: 64,
-		Y: 64,
-	},
+	size, err := loadFile(configPath)
+	if err != nil {
+		return
+	}
+
+	n = len(size)
+
+	sizeList = calcSizesPriority(size)
+	inQueueSum = make([]int32, n)
+
+	return
+
 }
 
-var sizesList = loadSizes()
+// Load from file
+func loadFile(configPath string) (s map[string]Size, err error) {
 
-// Загружаем размеры из конфиг файла
-func loadSizes() (s sizes) {
-
-	defer func() {
-		// Расчет приоритеты размеров
-		s = calcSizesPriority(s)
-	}()
-
-	configFile, err := os.Open("config/sizes.json")
+	configFile, err := os.Open(configPath)
 	if err != nil {
-		s = defaulSizes
 		return
 	}
 	defer configFile.Close()
 
 	err = json.NewDecoder(configFile).Decode(&s)
-	if err != nil || len(s) == 0 {
-		s = defaulSizes
+	if err != nil {
 		return
 	}
-
-	if _, ok := s["small"]; !ok {
-		s["small"] = defaulSizes["small"]
+	if len(s) == 0 {
+		err = errors.New("Size list is empty")
+		return
 	}
 
 	return
 
 }
 
-// Расчет приоритеты размеров
-func calcSizesPriority(s sizes) sizes {
+// Calculate sizes priority
+func calcSizesPriority(s map[string]Size) map[string]Size {
 
-	type pointN struct {
+	type sizeN struct {
 		name string
-		x, y int
+		x    int
 	}
 
-	sizeList := make([]pointN, 0)
+	sizeList := make([]sizeN, 0)
 
 	for k, v := range s {
 		sizeList = append(
-			sizeList, pointN{
+			sizeList, sizeN{
 				name: k,
 				x:    v.X,
-				y:    v.Y,
 			},
 		)
 	}
@@ -77,9 +82,8 @@ func calcSizesPriority(s sizes) sizes {
 	sort.Slice(sizeList, func(i, j int) bool { return sizeList[i].x < sizeList[j].x })
 
 	for k, v := range sizeList {
-		s[v.name] = point{
+		s[v.name] = Size{
 			X:        v.x,
-			Y:        v.y,
 			priority: k,
 		}
 	}
@@ -88,13 +92,13 @@ func calcSizesPriority(s sizes) sizes {
 
 }
 
-// Получит значение размера
-func GetSize(rec string) (int, int, int) {
+// GetSize
+func GetSize(rec string) (int, int, error) {
 
-	if size, ok := sizesList[strings.ToLower(rec)]; ok {
-		return size.X, size.Y, size.priority
+	if size, ok := sizeList[strings.ToLower(rec)]; ok {
+		return size.X, size.priority, nil
 	}
 
-	return GetSize("small")
+	return 0, 0, errSizeNotFound
 
 }

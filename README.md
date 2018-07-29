@@ -26,4 +26,4 @@
 `http://localhost:3020/mandelbrot/?x=-26.8672155&y=175.046014&zoom=20000000&rec=medium`  
 Тут множество Мандельброта увеличен 20 миллионов раз
 ###### Результат
-![alt text](example/mandelbrot.png "Множество Мандельброта")
+![alt text](example.png "Множество Мандельброта")

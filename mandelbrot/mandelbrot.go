@@ -1,18 +1,32 @@
 package mandelbrot
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"image"
 	"image/color"
+	"image/png"
 	"math"
 	"strconv"
 	"sync/atomic"
 
-	"github.com/tusupov/gomandelbrot/cache"
+	"github.com/pkg/errors"
 )
 
-var inQueueSum = make([]int32, len(sizesList))
+// Workers
+var workers = make(chan struct{}, 1)
+
+func SetWorkers(cnt uint) error {
+
+	if cnt == 0 {
+		return errors.New("Workers count must not be zero")
+	}
+
+	workers = make(chan struct{}, cnt)
+	return nil
+
+}
 
 type mandelbrot struct {
 	id            string
@@ -28,21 +42,18 @@ type param struct {
 	minImag, maxImag float64
 }
 
-// переместить mandelbrot в x и y пиксель
+// Move coordinate
 func (m mandelbrot) Move(x, y float64) mandelbrot {
 
 	m.moveX += x
-
-	// Умножаем на -1, чтобы правильно определит y оси
 	m.moveY += y * -1
-
 	m.updateId()
 
 	return m
 
 }
 
-// увеличить x раз
+// Zoom x times
 func (m mandelbrot) Zoom(x uint64) mandelbrot {
 
 	if x == 0 {
@@ -67,37 +78,34 @@ func (m mandelbrot) Zoom(x uint64) mandelbrot {
 
 }
 
-// Добавляет в очередь
+// Push in Queue
 func (m *mandelbrot) pushQueue() {
 
-	// Проверка приоритета на валидност
-	// если не валидно устанавливает самый низкий приоритет
-	if m.priority < 0 || len(sizesList) <= m.priority  {
-		m.priority = len(sizesList)
+	// Check priority
+	if m.priority < 0 || len(sizeList) <= m.priority {
+		m.priority = len(sizeList)
 	}
 
-	// Добавляет в очередь
-	for i := m.priority + 1; i < len(sizesList); i++ {
+	// Add to in Queue
+	for i := m.priority + 1; i < len(sizeList); i++ {
 		atomic.AddInt32(&inQueueSum[i], 1)
 	}
 
-	// Ждет своей очереди
+	// Wait
 	workers <- struct{}{}
 
-	// Убирает из очереди
-	for i := m.priority + 1; i < len(sizesList); i++ {
+	// Remove from in Queue
+	for i := m.priority + 1; i < len(sizeList); i++ {
 		atomic.AddInt32(&inQueueSum[i], -1)
 	}
 
 }
 
-// Убирает из очереди
+// Pull from Queue
 func (m mandelbrot) pullQueue() {
 	<-workers
 }
 
-// Проверка есть ли более приоритетные процессы
-// которые попали в очередь
 func (m mandelbrot) hasLowerInQueue() bool {
 
 	if inQueueSum[m.priority] > 0 {
@@ -107,25 +115,16 @@ func (m mandelbrot) hasLowerInQueue() bool {
 	return false
 }
 
-func (m mandelbrot) Draw() (buf []byte) {
+func (m mandelbrot) Draw() (buf []byte, err error) {
 
-	// Загружает из очереди
-	buf, err := cache.Load(m.width, m.height, m.id)
-	if err == nil {
-		return
-	}
-
-	// Добавляет и убирает из очереди
 	m.pushQueue()
 	defer m.pullQueue()
 
-	// Создает новую картинку с указанными размерами
 	img := image.NewRGBA64(image.Rect(0, 0, m.width, m.height))
 
-	// Количество итерации
 	iteration := m.calcIteration()
 
-	// Максимальны значение цветом
+	// Colors
 	maxuint16 := ^uint16(0)
 	colorK := maxuint16 / uint16(iteration)
 
@@ -142,11 +141,9 @@ func (m mandelbrot) Draw() (buf []byte) {
 
 				if real(z)*real(z)+imag(z)*imag(z) > 4 {
 
-					// Определяет нужный оттенок
+					// Calc color
 					clr := uint16(i) * colorK
 
-					// Красит точку определенным цветом
-					// черно белым цветом
 					img.Set(
 						x,
 						y,
@@ -166,8 +163,7 @@ func (m mandelbrot) Draw() (buf []byte) {
 
 		}
 
-		// Проверка есть ли более приоритетные процессы
-		// которые попали в очередь
+		// Check InQueue
 		if m.hasLowerInQueue() {
 			m.pullQueue()
 			m.pushQueue()
@@ -175,14 +171,19 @@ func (m mandelbrot) Draw() (buf []byte) {
 
 	}
 
-	// Сохраняет в кэш и возвращаем байт массив картинки
-	buf, _ = cache.Save(m.width, m.height, m.id, img)
+	r := new(bytes.Buffer)
+	err = png.Encode(r, img)
+	if err != nil {
+		return
+	}
+
+	buf = r.Bytes()
 
 	return
 
 }
 
-// Рассчитывает complex `c` с параметрами `x` and `y`
+// Calculate complex `c` with params `x` and `y`
 func (m mandelbrot) complex(x, y int) complex128 {
 
 	return complex(
@@ -192,8 +193,7 @@ func (m mandelbrot) complex(x, y int) complex128 {
 
 }
 
-// Рассчитывает количество итерации
-// в зависимости от увеличение
+// Calculate iteration
 func (m mandelbrot) calcIteration() int {
 
 	f := math.Sqrt(
@@ -208,7 +208,7 @@ func (m mandelbrot) calcIteration() int {
 
 }
 
-// Устанавливает ид для этого экземпляра
+// Update Id
 func (m *mandelbrot) updateId() {
 
 	str := strconv.FormatInt(int64(m.zoom), 10) + "_" +
@@ -222,15 +222,18 @@ func (m *mandelbrot) updateId() {
 
 }
 
-// Создаем новый экземпляр
-func New(rec string) mandelbrot {
+// New mandelbrot
+func New(rec string) (m mandelbrot, err error) {
 
-	// Получат значение размера
-	width, height, priority := GetSize(rec)
+	// Get size
+	size, priority, err := GetSize(rec)
+	if err != nil {
+		return
+	}
 
-	m := mandelbrot{
-		width:    width,
-		height:   height,
+	m = mandelbrot{
+		width:    size,
+		height:   size,
 		priority: priority,
 		zoom:     1,
 		param: param{
@@ -241,9 +244,8 @@ func New(rec string) mandelbrot {
 		},
 	}
 
-	// Устанавливает ид для этого экземпляра
 	m.updateId()
 
-	return m
+	return
 
 }
